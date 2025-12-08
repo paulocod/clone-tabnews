@@ -1,12 +1,9 @@
 import { Client } from 'pg';
 
 async function query(queryObject) {
-  const client = new Client({
-    connectionString: process.env.DATABASE_URL,
-  });
-  await client.connect();
-
+  let client;
   try {
+    client = await getNewClient();
     const result = await client.query(queryObject);
     return result;
   } catch (error) {
@@ -16,6 +13,26 @@ async function query(queryObject) {
   }
 }
 
+function getSSLValues() {
+  if(process.env.DATABASE_CA_CERT) {
+    return {
+      rejectUnauthorized: true,
+      ca: process.env.DATABASE_CA_CERT,
+    };
+  }
+  return process.env.NODE_ENV === 'production' ? true : false;
+}
+
+async function getNewClient() {
+  const client = new Client({
+    connectionString: process.env.DATABASE_URL,
+    ssl: getSSLValues(),
+  });
+  await client.connect();
+  return client;
+}
+
 export default {
-  query: query,
+  query,
+  getNewClient,
 };

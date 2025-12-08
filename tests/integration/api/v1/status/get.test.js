@@ -8,7 +8,7 @@ test("GET to /api/v1/status returns status 200 and correct body", async () => {
   const parsedUpdateAt = new Date(data.updated_at).toISOString();
   expect(parsedUpdateAt).toBe(data.updated_at);
 
-  expect(data.dependencies.database.version).toEqual("16.0");
-  expect(data.dependencies.database.max_connections).toEqual(100);
+  expect(data.dependencies.database.version).toEqual("17.7 (178558d)");
+  expect(data.dependencies.database.max_connections).toEqual(901);
   expect(data.dependencies.database.opened_connections).toEqual(1);
 });
