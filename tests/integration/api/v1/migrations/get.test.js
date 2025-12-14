@@ -14,3 +14,13 @@ test("GET to /api/v1/migrations returns status 200 and correct body", async () =
   expect(Array.isArray(responseBody)).toBe(true);
   expect(responseBody.length).toBeGreaterThan(0);
 });
+
+test("Verify leaks using other HTTP methods on /api/v1/migrations", async () => {
+  const methods = ["PUT", "DELETE", "PATCH", "OPTIONS", "HEAD"];
+  for (const method of methods) {
+    const res = await fetch("http://localhost:3000/api/v1/migrations", {
+      method,
+    });
+    expect(res.status).toBe(405);
+  }
+});
