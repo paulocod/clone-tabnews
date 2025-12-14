@@ -1,0 +1,67 @@
+services:
+  postgres:
+    image: postgres:16.0-alpine3.18
+    container_name: postgres_local
+    restart: always
+    ports:
+      - "5440:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    tmpfs:
+      /var/lib/postgresql/data
+    volumes:
+      - ./init-scripts:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -U postgres"]
+      interval: 2s
+      retries: 10
+      timeout: 2s
+
+  migrate:
+    image: node:20-alpine
+    container_name: migrate_local
+    working_dir: /app
+    volumes:
+      - ..:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: npm run migration:up
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/postgres
+    restart: "no"
+  redis:
+    image: redis:7-alpine
+    container_name: redis_local
+    command: ["redis-server", "--appendonly", "no"]
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 3
+      timeout: 3s
+  memcached:
+    image: memcached:1.6-alpine
+    container_name: memcached_local
+    ports:
+      - "11222:11211"
+    command: ["-m", "256"]
+    healthcheck:
+      test: ["CMD", "memcached-tool", "localhost:11211", "stats"]
+      interval: 10s
+      retries: 5
+      timeout: 5s
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: mailhog
+    restart: unless-stopped
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+
+networks:
+  default:
+    name: dev-network
